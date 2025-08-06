@@ -55,7 +55,7 @@ resource "aws_lambda_function" "locations_api" {
     }
   }
 
-  depends_on = [data.archive_file.lambda_zip,  aws_iam_role.lambda_exec]
+  depends_on = [data.archive_file.lambda_zip, aws_iam_role.lambda_exec]
 }
 
 resource "aws_iam_policy" "lambda_secrets_access" {

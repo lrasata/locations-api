@@ -20,6 +20,14 @@ exports.handler = async (event) => {
     const countryCode = event.queryStringParameters?.countryCode;
 
     let url = "";
+    const responseHeader = {
+        headers: {
+            "Content-Type": "application/json" ,
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+            "Access-Control-Allow-Methods": "GET,OPTIONS",
+        }
+    }
     switch (dataType) {
         case "country":
             url = `${API_COUNTRIES_GEO_DB_URL}?${urlQuery}`;
@@ -27,6 +35,7 @@ exports.handler = async (event) => {
         case "city":
             if (!countryCode) {
                 return {
+                    ...responseHeader,
                     statusCode: 400,
                     body: JSON.stringify({ error: "Missing query parameter for City" }),
                 };
@@ -35,6 +44,7 @@ exports.handler = async (event) => {
             break;
         default:
             return {
+                ...responseHeader,
                 statusCode: 400,
                 body: JSON.stringify({ error: "Missing query parameter for DataType" }),
             };
@@ -56,12 +66,13 @@ exports.handler = async (event) => {
         const data = await response.json();
 
         return {
+            ...responseHeader,
             statusCode: 200,
             body: JSON.stringify(data),
-            headers: { "Content-Type": "application/json" },
         };
     } catch (error) {
         return {
+            ...responseHeader,
             statusCode: 500,
             body: JSON.stringify({ error: error.message }),
         };

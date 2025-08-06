@@ -106,3 +106,14 @@ Query parameters :
 curl https://<your-api-id>.execute-api.<region>.amazonaws.com/prod/locations?dataType=city&namePrefix=Paris
 ```
 
+## 🔎 Gotcha - Note to myself
+- OPTIONS method should stays with CORS headers in API Gateway. 
+  - API Gateway can automatically respond to preflight OPTIONS requests (which browsers send to check permissions) without invoking your Lambda — this reduces Lambda invocations and saves cost. 
+- For GET requests (or any non-OPTIONS request), Lambda function must return the CORS headers.
+- No need to set CORS headers on API Gateway for GET/POST when using `Lambda proxy integration`. 
+  - But ensure your Lambda function handles CORS headers for all responses (including errors).
+
+> 💡 Let API Gateway manage CORS whenever possible 💡
+> - API Gateway is designed to handle cross-origin resource sharing (CORS) settings centrally.
+> - API Gateway can add necessary CORS headers on the response for all your API calls consistently.
+> - Keep Lambda code simpler and focused on business logic.

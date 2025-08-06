@@ -1,6 +1,6 @@
 output "api_gateway_invoke_url" {
   description = "Public URL for invoking the API Gateway"
-  value = "https://${aws_api_gateway_rest_api.api.id}.execute-api.${var.region}.amazonaws.com/${aws_api_gateway_stage.prod.stage_name}/locations"
+  value       = "https://${aws_api_gateway_rest_api.api.id}.execute-api.${var.region}.amazonaws.com/${aws_api_gateway_stage.prod.stage_name}/locations"
 }
 
 output "lambda_function_name" {
