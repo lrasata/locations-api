@@ -63,13 +63,17 @@ resource "aws_api_gateway_method" "get_method" {
   resource_id   = aws_api_gateway_resource.location_resource.id
   http_method   = "GET"
   authorization = "NONE" # allows public access
+
+  request_parameters = {
+    "method.request.header.X-Custom-Auth" = true
+  }
 }
 
 # connects the GET method on /locations to the Lambda function
 resource "aws_api_gateway_integration" "lambda_integration" {
-  rest_api_id             = aws_api_gateway_rest_api.api.id
-  resource_id             = aws_api_gateway_resource.location_resource.id
-  http_method             = aws_api_gateway_method.get_method.http_method
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.location_resource.id
+  http_method = aws_api_gateway_method.get_method.http_method
   # Proxy integration : API Gateway forwards the entire HTTP request (headers, path, query string, body, etc.) directly to your backend Lambda function as-is
   type                    = "AWS_PROXY"
   integration_http_method = "POST"

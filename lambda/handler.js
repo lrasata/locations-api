@@ -8,6 +8,16 @@ exports.handler = async (event) => {
 
     const namePrefix = event.queryStringParameters?.namePrefix;
 
+    const headers = event.headers || {};
+    const customAuth = headers['X-Custom-Auth'] || headers['x-custom-auth'];
+
+    if (customAuth !== process.env.CUSTOM_AUTH_SECRET) {
+        return {
+            statusCode: 403,
+            body: 'Forbidden: Invalid custom auth header'
+        };
+    }
+
     if (!dataType || !namePrefix) {
         return {
             statusCode: 400,

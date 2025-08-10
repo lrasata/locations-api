@@ -52,6 +52,7 @@ resource "aws_lambda_function" "locations_api" {
       API_COUNTRIES_GEO_DB_URL = var.API_COUNTRIES_GEO_DB_URL
       GEO_DB_RAPID_API_HOST    = var.GEO_DB_RAPID_API_HOST
       GEO_DB_RAPID_API_KEY     = local.geo_db_secrets.GEO_DB_RAPID_API_KEY
+      CUSTOM_AUTH_SECRET       = local.geo_db_secrets.CUSTOM_AUTH_SECRET
     }
   }
 
