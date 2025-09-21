@@ -1,67 +1,56 @@
-# Locations API (AWS Lambda + API Gateway managed with Terraform)
+# Locations API
 
 This project provides a secure serverless API for accessing location data, powered by AWS Lambda and 
 API Gateway.
 Infrastructure is managed using **Terraform**.
 
-<img src="./docs/diagram.png" alt="location-api-diagram">
 
-### Purpose & Context
 
-The original goal is to be able to deploy [Trip design web app](https://github.com/lrasata/trip-planner-web-app) 
-(React + TypeScript web app) in a secure way on S3 + CloudFront. This web application is using [Geo DB API](https://rapidapi.com/wirefreethought/api/geodb-cities)
-to fetch data related to cities and countries. And to do so, it must provide a secret `API_KEY` in the header of an authenticated request.
+## Overview
 
-But the challenge is, to inject secrets securely in a React + Vite app, secrets must be separated from 
+[Trip planner web app](https://github.com/lrasata/trip-planner-web-app) is using [Geo DB API](https://rapidapi.com/wirefreethought/api/geodb-cities)
+to fetch data related to cities and countries.
+
+To be able to deploy [Trip planner web app](https://github.com/lrasata/trip-planner-web-app)
+(React + TypeScript web app) in a secure way on S3 + CloudFront, it must provide a secret `API_KEY` in the header of an authenticated request.
+
+But the challenge is, to inject secrets securely in a React + Vite app, secrets must be separated from
 the frontend and a backend must be used to access them. **There is no secure way to keep a secret in a public browser app.**
 
-> ✅ This project has been created to provide an API endpoint to call for the frontend without requiring any secrets.
+Locations API has been created to provide an API endpoint to call for the frontend without requiring any secrets. Those components provide a secure serverless API for accessing location data, powered by AWS Lambda and API Gateway.
 
-## Stack
+<img src="./docs/diagram.png" alt="location-api-diagram">
 
-- **Runtime**: Node.js (Express-style Lambda)
-- **Infrastructure**: AWS Lambda, API Gateway (REST), Terraform
-- **Deployment**: Terraform CLI
-- **Secrets**: AWS Lambda environment variables
-- **Security**: API Gateway integration
+## Key attributes
+**Security**
+- Secrets like API keys are stored in AWS Secrets Manager and passed to Lambda via environment variables, preventing exposure in the frontend.
+- No sensitive data is ever stored in the browser or client code.
 
-## Project Structure
+**Maintainability**
+- Usage of serverless architecture (AWS Lambda) to avoid managing servers, making deployments and updates easier.
+- Node.js runtime and Express-style Lambda code structure to simplify development and debugging.
 
-```
-├── lambda/                   # Lambda function code
-│   └── handler.js              
-├── lambda.tf                 
-├── api-gateway.tf            
-├── variables.tf              
-└── outputs.tf                
-└── README.md
-```
+**Scalability**
+- Lambda functions automatically scale based on incoming request volume.
+- API Gateway handles request routing and can throttle.
 
-## Getting Started
+**Reliability**
+- Managed AWS services like Lambda and API Gateway provide built-in high availability.
+- Error handling and CORS headers are implemented to prevent client-side failures.
 
-### 1. Prerequisites
+**Monitoring**
+- **AWS CloudWatch Alarms + SNS** are set up to monitor :
+    - Api gateway :
+        - Alert when API Gateway 5xx errors spike
+        - Alert when API Gateway latency is high
+    - Lambda function :
+        - Alert when Lambda has errors
 
-- Node.js
-- AWS CLI with credentials configured
-- Terraform `>=1.3`
-- ⚠️ AWS IAM user with permissions to deploy Lambda and API Gateway
-
-### 2. Setup
-
-#### Install dependencies
-
-If using any npm modules:
-
-```bash
-cd lambda
-npm install
-```
-
-#### Define Env variables and secret API key
+## Env variables and secret API key
 
 **Local development**
 
-In `lambda/hadnler.js`, the secret (e.g., API key) should be passed via environment variables in Terraform:
+In `lambda/handler.js`, the secret (e.g., API key) should be passed via environment variables in Terraform:
 
 ```js
 Authorization: 'Bearer ${process.env.GEO_DB_RAPID_API_KEY}'
@@ -77,21 +66,9 @@ GEO_DB_RAPID_API_KEY=
 
 **For deployed env on AWS**
 
-Secrets has to be defined in AWS Secrets Manager inside : `prod/trip-design-app/secrets` as configure in Terraform file.
+Secrets have to be defined in AWS Secrets Manager inside : `prod/trip-planner-app/secrets` as configure in Terraform file.
 
-Environment variables has to be defined in `terraform.tfvars`
-
-
-### 3. Deploy with Terraform
-
-```bash
-terraform init
-terraform validate
-terraform plan
-terraform apply
-```
-
-After deployment, the API endpoint will be printed as output.
+Environment variables have to be defined in `terraform.tfvars`
 
 ## API Usage
 
@@ -106,14 +83,13 @@ Query parameters :
 curl https://<your-api-id>.execute-api.<region>.amazonaws.com/prod/locations?dataType=city&namePrefix=Paris
 ```
 
-## 🔎 Gotcha - Note to myself
-- OPTIONS method should stays with CORS headers in API Gateway. 
-  - API Gateway can automatically respond to preflight OPTIONS requests (which browsers send to check permissions) without invoking your Lambda — this reduces Lambda invocations and saves cost. 
-- For GET requests (or any non-OPTIONS request), Lambda function must return the CORS headers.
-- No need to set CORS headers on API Gateway for GET/POST when using `Lambda proxy integration`. 
-  - But ensure your Lambda function handles CORS headers for all responses (including errors).
+## 🔎 Gotchas - Lessons learned
+- OPTIONS method should stay with *CORS headers* in API Gateway.
+    - API Gateway can automatically respond to preflight OPTIONS requests (which browsers send to check permissions) without invoking your Lambda — this reduces Lambda invocations and saves cost.
+- For GET requests (or any non-OPTIONS request), Lambda function MUST return the CORS headers.
+- No need to set CORS headers on API Gateway for GET/POST when using `Lambda proxy integration`.
+    - But ensure your Lambda function handles CORS headers for all responses (including errors).
 
-> 💡 Let API Gateway manage CORS whenever possible 💡
-> - API Gateway is designed to handle cross-origin resource sharing (CORS) settings centrally.
-> - API Gateway can add necessary CORS headers on the response for all your API calls consistently.
-> - Keep Lambda code simpler and focused on business logic.
+> 💡 Let API Gateway manage CORS whenever possible - Keep Lambda code simpler and focused on business logic.
+>
+> API Gateway is designed to handle cross-origin resource sharing (CORS) settings centrally.

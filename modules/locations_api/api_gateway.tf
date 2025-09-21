@@ -1,5 +1,5 @@
 resource "aws_api_gateway_rest_api" "api" {
-  name        = "locations-api"
+  name        = "${var.environment}-locations-api"
   description = "API Gateway for retrieving locations"
 }
 
@@ -63,10 +63,6 @@ resource "aws_api_gateway_method" "get_method" {
   resource_id   = aws_api_gateway_resource.location_resource.id
   http_method   = "GET"
   authorization = "NONE" # allows public access
-
-  request_parameters = {
-    "method.request.header.X-Custom-Auth" = true
-  }
 }
 
 # connects the GET method on /locations to the Lambda function
@@ -102,5 +98,34 @@ resource "aws_api_gateway_deployment" "deployment" {
 resource "aws_api_gateway_stage" "prod" {
   deployment_id = aws_api_gateway_deployment.deployment.id
   rest_api_id   = aws_api_gateway_rest_api.api.id
-  stage_name    = "prod"
+  stage_name    = var.environment
+}
+
+# Create a custom domain for API Gateway
+resource "aws_api_gateway_domain_name" "api" {
+  domain_name              = var.api_locations_domain_name
+  regional_certificate_arn = var.backend_certificate_arn
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
+}
+
+resource "aws_api_gateway_base_path_mapping" "api_mapping" {
+  domain_name = aws_api_gateway_domain_name.api.domain_name
+  api_id      = aws_api_gateway_rest_api.api.id
+  stage_name  = aws_api_gateway_stage.prod.stage_name
+  base_path   = "" # empty string means root path
+}
+
+# Create Route 53 alias record to point to API Gateway
+resource "aws_route53_record" "api" {
+  zone_id = var.route_53_zone_id # data.aws_route53_zone.main.zone_id
+  name    = aws_api_gateway_domain_name.api.domain_name
+  type    = "A"
+
+  alias {
+    name                   = aws_api_gateway_domain_name.api.regional_domain_name
+    zone_id                = aws_api_gateway_domain_name.api.regional_zone_id
+    evaluate_target_health = false
+  }
 }

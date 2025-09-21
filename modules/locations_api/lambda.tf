@@ -4,20 +4,8 @@ data "archive_file" "lambda_zip" {
   output_path = "${path.module}/lambda.zip"
 }
 
-data "aws_secretsmanager_secret" "geo_db_rapid_api_secrets" {
-  name = "prod/trip-design-app/secrets"
-}
-
-data "aws_secretsmanager_secret_version" "geo_db_rapid_api_secrets_version" {
-  secret_id = data.aws_secretsmanager_secret.geo_db_rapid_api_secrets.id
-}
-
-locals {
-  geo_db_secrets = jsondecode(data.aws_secretsmanager_secret_version.geo_db_rapid_api_secrets_version.secret_string)
-}
-
 resource "aws_iam_role" "lambda_exec" {
-  name = "lambda_exec_role"
+  name = "${var.environment}-lambda-exec-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -37,9 +25,9 @@ resource "aws_iam_role_policy_attachment" "lambda_secrets_policy_attach" {
 }
 
 resource "aws_lambda_function" "locations_api" {
-  function_name = "location-api-lambda"
-  runtime       = "nodejs18.x"
-  handler       = "handler.handler" # file.function exported
+  function_name = "${var.environment}-location-api-lambda"
+  runtime       = "nodejs20.x"
+  handler       = "index.handler" # file.function exported
 
   filename         = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
@@ -51,8 +39,8 @@ resource "aws_lambda_function" "locations_api" {
       API_CITIES_GEO_DB_URL    = var.API_CITIES_GEO_DB_URL
       API_COUNTRIES_GEO_DB_URL = var.API_COUNTRIES_GEO_DB_URL
       GEO_DB_RAPID_API_HOST    = var.GEO_DB_RAPID_API_HOST
-      GEO_DB_RAPID_API_KEY     = local.geo_db_secrets.GEO_DB_RAPID_API_KEY
-      CUSTOM_AUTH_SECRET       = local.geo_db_secrets.CUSTOM_AUTH_SECRET
+      GEO_DB_RAPID_API_KEY     = local.geo_db_rapid_api_key
+      CUSTOM_AUTH_SECRET       = local.auth_secret
     }
   }
 
@@ -60,7 +48,7 @@ resource "aws_lambda_function" "locations_api" {
 }
 
 resource "aws_iam_policy" "lambda_secrets_access" {
-  name        = "lambda_secretsmanager_access"
+  name        = "${var.environment}-lambda-secretsmanager-access"
   description = "Allow Lambda to access Secrets Manager"
 
   policy = jsonencode({
@@ -71,7 +59,7 @@ resource "aws_iam_policy" "lambda_secrets_access" {
           "secretsmanager:GetSecretValue"
         ]
         Effect   = "Allow"
-        Resource = data.aws_secretsmanager_secret.geo_db_rapid_api_secrets.arn
+        Resource = data.aws_secretsmanager_secret.trip_design_secrets.arn
       }
     ]
   })
