@@ -12,7 +12,7 @@ Infrastructure is managed using **Terraform**.
 to fetch data related to cities and countries.
 
 To be able to deploy [Trip planner web app](https://github.com/lrasata/trip-planner-web-app)
-(React + TypeScript web app) in a secure way on S3 + CloudFront, it must provide a secret `API_KEY` in the header of an authenticated request.
+(React + TypeScript web app) securely on S3 + CloudFront, it must provide a secret `API_KEY` in the header of an authenticated request.
 
 But the challenge is, to inject secrets securely in a React + Vite app, secrets must be separated from
 the frontend and a backend must be used to access them. **There is no secure way to keep a secret in a public browser app.**
@@ -50,7 +50,7 @@ Locations API has been created to provide an API endpoint to call for the fronte
 
 **Local development**
 
-In `lambda/handler.js`, the secret (e.g., API key) should be passed via environment variables in Terraform:
+In `modules/locations_api/lambda/index.js`, the secret (e.g., API key) should be passed via environment variables in Terraform:
 
 ```js
 Authorization: 'Bearer ${process.env.GEO_DB_RAPID_API_KEY}'
@@ -66,7 +66,7 @@ GEO_DB_RAPID_API_KEY=
 
 **For deployed env on AWS**
 
-Secrets have to be defined in AWS Secrets Manager inside : `prod/trip-planner-app/secrets` as configure in Terraform file.
+Secrets have to be defined in AWS Secrets Manager inside : `<environment>/trip-planner-app/secrets` as configure in Terraform file.
 
 Environment variables have to be defined in `terraform.tfvars`
 
@@ -90,6 +90,6 @@ curl https://<your-api-id>.execute-api.<region>.amazonaws.com/prod/locations?dat
 - No need to set CORS headers on API Gateway for GET/POST when using `Lambda proxy integration`.
     - But ensure your Lambda function handles CORS headers for all responses (including errors).
 
-> 💡 Let API Gateway manage CORS whenever possible - Keep Lambda code simpler and focused on business logic.
+> 💡 Let API Gateway manage CORS whenever possible — Keep Lambda code simpler and focused on business logic.
 >
 > API Gateway is designed to handle cross-origin resource sharing (CORS) settings centrally.
