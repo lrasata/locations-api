@@ -8,7 +8,7 @@ data "aws_secretsmanager_secret_version" "trip_design_secrets_value" {
 
 locals {
   geo_db_rapid_api_key = jsondecode(data.aws_secretsmanager_secret_version.trip_design_secrets_value.secret_string)["GEO_DB_RAPID_API_KEY"]
-  auth_secret          = jsondecode(data.aws_secretsmanager_secret_version.trip_design_secrets_value.secret_string)["CUSTOM_AUTH_SECRET"]
+  auth_secret          = jsondecode(data.aws_secretsmanager_secret_version.trip_design_secrets_value.secret_string)["API_GW_LOCATIONS_AUTH_SECRET"]
 }
 
 resource "aws_iam_policy" "secrets_access" {

@@ -7,7 +7,7 @@ const corsHeaders = {
 
 exports.handler = async (event) => {
     const { dataType, namePrefix, countryCode } = event.queryStringParameters || {};
-    const customAuth = event.headers?.['X-Custom-Auth'] || event.headers?.['x-custom-auth'];
+    const customAuth = event.headers?.['x-api-gateway-locations-auth'];
 
     if (customAuth !== process.env.CUSTOM_AUTH_SECRET) {
         return {
